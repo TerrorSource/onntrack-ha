@@ -1,12 +1,12 @@
 {
-  "domain": "onntrack",
-  "name": "Onntrack GPS Tracker",
-  "version": "1.0.0",
-  "config_flow": true,
-  "documentation": "https://github.com/TerrorSource/onntrack-ha",
-  "issue_tracker": "https://github.com/TerrorSource/onntrack-ha/issues",
-  "dependencies": [],
-  "codeowners": ["@TerrorSource"],
-  "requirements": [],
-  "iot_class": "cloud_polling"
+    "domain": "onntrack",
+    "name": "Onntrack GPS Tracker",
+    "version": "1.0.1",
+    "config_flow": true,
+    "documentation": "https://github.com/TerrorSource/onntrack-ha",
+    "issue_tracker": "https://github.com/TerrorSource/onntrack-ha/issues",
+    "dependencies": [],
+    "codeowners": ["@TerrorSource"],
+    "requirements": [],
+    "iot_class": "cloud_polling"
 }
