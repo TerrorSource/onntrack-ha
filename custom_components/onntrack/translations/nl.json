@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Onntrack instellen",
+        "description": "Vul je Onntrack inloggegevens in. Je IMEI vind je op het Onntrack platform onder je apparaat.",
+        "data": {
+          "username": "E-mailadres",
+          "password": "Wachtwoord",
+          "imei": "IMEI nummer"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ongeldige gebruikersnaam of wachtwoord",
+      "cannot_connect": "Kan geen verbinding maken met Onntrack"
+    },
+    "abort": {
+      "already_configured": "Dit apparaat (IMEI) is al geconfigureerd"
+    }
+  }
+}

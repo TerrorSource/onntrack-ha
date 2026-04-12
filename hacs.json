@@ -1,0 +1,6 @@
+{
+  "name": "Onntrack",
+  "domains": ["sensor", "device_tracker"],
+  "iot_class": "cloud_polling",
+  "render_readme": true
+}
