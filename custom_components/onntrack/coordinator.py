@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 from datetime import timedelta
 
@@ -43,16 +44,25 @@ class OnntrackCoordinator(DataUpdateCoordinator):
     async def async_login(self) -> str:
         """Log in bij Onntrack en retourneer een token."""
         session = async_get_clientsession(self.hass)
+        password_md5 = hashlib.md5(self.password.encode()).hexdigest()
         try:
             async with asyncio.timeout(10):
                 resp = await session.post(
                     API_LOGIN,
-                    json={"account": self.username, "password": self.password},
+                    json={
+                        "account": self.username,
+                        "password": password_md5,
+                        "language": "en",
+                        "validCode": "",
+                        "nodeId": "",
+                    },
                     headers={"Content-Type": "application/json"},
                 )
                 data = await resp.json(content_type=None)
         except Exception as err:
             raise UpdateFailed(f"Verbindingsfout bij inloggen: {err}") from err
+
+        _LOGGER.debug("Onntrack login response: %s", data)
 
         code = data.get("code")
         if code not in (CODE_SUCCESS, CODE_ALT_SUCCESS):
