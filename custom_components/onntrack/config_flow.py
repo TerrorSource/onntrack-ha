@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import ConfigEntryAuthFailed
 
-from .const import DOMAIN, CONF_IMEI, API_LOGIN, CODE_SUCCESS, CODE_ALT_SUCCESS
+from .const import DOMAIN, CONF_IMEI
 from .coordinator import OnntrackCoordinator
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
