@@ -185,3 +185,7 @@ elif model == "todayActivity":
                                                                                                                                                     result["total_mileage"] = item.get("value")
                                                                                                                             
                                                                                                             return result
+
+    async def async_shutdown(self) -> None:
+        """Sluit de coordinator netjes af."""
+        await super().async_shutdown()
