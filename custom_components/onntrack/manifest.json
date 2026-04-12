@@ -3,10 +3,10 @@
   "name": "Onntrack GPS Tracker",
   "version": "1.0.0",
   "config_flow": true,
-  "documentation": "https://github.com/JOUW_GITHUB_USERNAME/onntrack-ha",
-  "issue_tracker": "https://github.com/JOUW_GITHUB_USERNAME/onntrack-ha/issues",
+  "documentation": "https://github.com/TerrorSource/onntrack-ha",
+  "issue_tracker": "https://github.com/TerrorSource/onntrack-ha/issues",
   "dependencies": [],
-  "codeowners": ["@JOUW_GITHUB_USERNAME"],
+  "codeowners": ["@TerrorSource"],
   "requirements": [],
   "iot_class": "cloud_polling"
 }
