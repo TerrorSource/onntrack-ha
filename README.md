@@ -8,7 +8,7 @@ Integreer je Onntrack GPS tracker in Home Assistant. Toont locatie, adres, snelh
 
 1. Open HACS in Home Assistant
 2. Ga naar **Integraties** → **⋮** → **Aangepaste repositories**
-3. Voeg toe: `https://github.com/JOUW_GITHUB_USERNAME/onntrack-ha`  
+3. Voeg toe: `https://github.com/TerrorSource/onntrack-ha`  
    Categorie: **Integratie**
 4. Zoek naar "Onntrack" en installeer
 5. Herstart Home Assistant
