@@ -2,48 +2,38 @@
 from __future__ import annotations
 
 from homeassistant.components.device_tracker import SourceType, TrackerEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, CONF_IMEI
+from . import OnntrackConfigEntry
+from .const import CONF_VEHICLE_TYPE, DEFAULT_VEHICLE_TYPE, VEHICLE_ICONS
 from .coordinator import OnntrackCoordinator
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: OnntrackConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Stel de Onntrack device tracker in."""
-    coordinator: OnntrackCoordinator = hass.data[DOMAIN][entry.entry_id]
-    imei = entry.data[CONF_IMEI]
-    async_add_entities([OnntrackDeviceTracker(coordinator, imei, entry.entry_id)])
+    vehicle_type = entry.options.get(CONF_VEHICLE_TYPE, DEFAULT_VEHICLE_TYPE)
+    async_add_entities([OnntrackDeviceTracker(entry.runtime_data, vehicle_type)])
 
 
 class OnntrackDeviceTracker(CoordinatorEntity[OnntrackCoordinator], TrackerEntity):
     """Onntrack GPS device tracker."""
 
     _attr_has_entity_name = True
-    _attr_name = "Locatie"
+    _attr_translation_key = "location"
 
-    def __init__(
-        self,
-        coordinator: OnntrackCoordinator,
-        imei: str,
-        entry_id: str,
-    ) -> None:
+    def __init__(self, coordinator: OnntrackCoordinator, vehicle_type: str) -> None:
         """Initialiseer de tracker."""
         super().__init__(coordinator)
-        self._imei = imei
-        self._attr_unique_id = f"{imei}_tracker"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, imei)},
-            name=coordinator.data.get("device_name", f"Onntrack {imei[-5:]}") if coordinator.data else f"Onntrack {imei[-5:]}",
-            manufacturer="Onntrack",
-            model="GPS Tracker",
+        self._attr_unique_id = f"{coordinator.imei}_tracker"
+        self._attr_device_info = coordinator.device_info
+        self._attr_icon = VEHICLE_ICONS.get(
+            vehicle_type, VEHICLE_ICONS[DEFAULT_VEHICLE_TYPE]
         )
 
     @property
@@ -51,14 +41,14 @@ class OnntrackDeviceTracker(CoordinatorEntity[OnntrackCoordinator], TrackerEntit
         """Geef de breedtegraad terug."""
         if self.coordinator.data is None:
             return None
-        return self.coordinator.data.get("latitude")
+        return self.coordinator.data.latitude
 
     @property
     def longitude(self) -> float | None:
         """Geef de lengtegraad terug."""
         if self.coordinator.data is None:
             return None
-        return self.coordinator.data.get("longitude")
+        return self.coordinator.data.longitude
 
     @property
     def source_type(self) -> SourceType:
@@ -66,29 +56,11 @@ class OnntrackDeviceTracker(CoordinatorEntity[OnntrackCoordinator], TrackerEntit
         return SourceType.GPS
 
     @property
-    def icon(self) -> str:
-        """Geef het icoon terug op basis van status."""
-        if self.coordinator.data:
-            status = self.coordinator.data.get("status", "")
-            if status == "MOVE":
-                return "mdi:motorbike"
-            return "mdi:motorbike-off"
-        return "mdi:motorbike"
-
-    @property
     def extra_state_attributes(self) -> dict:
-        """Extra attributen voor de tracker."""
-        if self.coordinator.data is None:
-            return {}
-        data = self.coordinator.data
-        return {
-            "imei": self._imei,
-            "address": data.get("address"),
-            "status": data.get("status"),
-            "speed": data.get("speed"),
-            "satellites": data.get("satellites"),
-            "signal": data.get("signal"),
-            "last_online": data.get("last_online"),
-            "acc": data.get("acc"),
-            "voltage": data.get("voltage"),
-        }
+        """Extra attributen voor de tracker.
+
+        Bewust beperkt tot het IMEI: alle overige waarden bestaan al als
+        eigen entiteiten en zouden hier alleen de recorder-database
+        dubbel vullen.
+        """
+        return {"imei": self.coordinator.imei}

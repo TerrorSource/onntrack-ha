@@ -2,21 +2,111 @@
   "config": {
     "step": {
       "user": {
-        "title": "Onntrack instellen",
-        "description": "Vul je Onntrack inloggegevens in",
+        "title": "Set up Onntrack",
+        "description": "Enter your Onntrack credentials. You can find the IMEI on the Onntrack platform under your device.",
         "data": {
-          "username": "E-mailadres",
-          "password": "Wachtwoord",
-          "imei": "IMEI nummer van het apparaat"
+          "username": "Email address",
+          "password": "Password",
+          "imei": "Device IMEI number"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Onntrack",
+        "description": "The password for {username} is no longer valid. Enter the new password.",
+        "data": {
+          "password": "Password"
         }
       }
     },
     "error": {
-      "invalid_auth": "Ongeldige gebruikersnaam of wachtwoord",
-      "cannot_connect": "Kan geen verbinding maken met Onntrack"
+      "invalid_auth": "Invalid username or password",
+      "cannot_connect": "Unable to connect to Onntrack"
     },
     "abort": {
-      "already_configured": "Dit apparaat is al geconfigureerd"
+      "already_configured": "This device (IMEI) is already configured",
+      "reauth_successful": "Re-authentication was successful",
+      "reauth_failed": "Re-authentication failed, please remove and re-add the integration"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Onntrack options",
+        "data": {
+          "scan_interval": "Update interval (seconds)",
+          "vehicle_type": "Vehicle type"
+        }
+      }
+    }
+  },
+  "selector": {
+    "vehicle_type": {
+      "options": {
+        "car": "Car",
+        "van": "Van",
+        "truck": "Truck",
+        "motorbike": "Motorcycle",
+        "scooter": "Scooter",
+        "other": "Other"
+      }
+    }
+  },
+  "entity": {
+    "device_tracker": {
+      "location": {
+        "name": "Location"
+      }
+    },
+    "binary_sensor": {
+      "ignition": {
+        "name": "Ignition"
+      }
+    },
+    "sensor": {
+      "address": {
+        "name": "Location address"
+      },
+      "status": {
+        "name": "Status",
+        "state": {
+          "STATIC": "Parked",
+          "MOVE": "Moving",
+          "OFFLINE": "Offline"
+        }
+      },
+      "speed": {
+        "name": "Speed"
+      },
+      "latitude": {
+        "name": "Latitude"
+      },
+      "longitude": {
+        "name": "Longitude"
+      },
+      "satellites": {
+        "name": "Satellites"
+      },
+      "signal": {
+        "name": "Signal strength"
+      },
+      "last_online": {
+        "name": "Last online"
+      },
+      "positioning_time": {
+        "name": "Last GPS fix"
+      },
+      "today_mileage": {
+        "name": "Distance today"
+      },
+      "total_mileage": {
+        "name": "Odometer"
+      },
+      "voltage": {
+        "name": "Voltage"
+      },
+      "positioning_type": {
+        "name": "Positioning type"
+      }
     }
   }
 }

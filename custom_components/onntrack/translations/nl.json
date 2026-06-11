@@ -9,6 +9,13 @@
           "password": "Wachtwoord",
           "imei": "IMEI nummer"
         }
+      },
+      "reauth_confirm": {
+        "title": "Onntrack opnieuw aanmelden",
+        "description": "Het wachtwoord voor {username} is niet meer geldig. Vul het nieuwe wachtwoord in.",
+        "data": {
+          "password": "Wachtwoord"
+        }
       }
     },
     "error": {
@@ -16,7 +23,90 @@
       "cannot_connect": "Kan geen verbinding maken met Onntrack"
     },
     "abort": {
-      "already_configured": "Dit apparaat (IMEI) is al geconfigureerd"
+      "already_configured": "Dit apparaat (IMEI) is al geconfigureerd",
+      "reauth_successful": "Opnieuw aanmelden is gelukt",
+      "reauth_failed": "Opnieuw aanmelden mislukt, verwijder de integratie en voeg deze opnieuw toe"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Onntrack opties",
+        "data": {
+          "scan_interval": "Update-interval (seconden)",
+          "vehicle_type": "Voertuigtype"
+        }
+      }
+    }
+  },
+  "selector": {
+    "vehicle_type": {
+      "options": {
+        "car": "Auto",
+        "van": "Bestelbus",
+        "truck": "Vrachtwagen",
+        "motorbike": "Motor",
+        "scooter": "Scooter",
+        "other": "Overig"
+      }
+    }
+  },
+  "entity": {
+    "device_tracker": {
+      "location": {
+        "name": "Locatie"
+      }
+    },
+    "binary_sensor": {
+      "ignition": {
+        "name": "Ontsteking"
+      }
+    },
+    "sensor": {
+      "address": {
+        "name": "Locatie adres"
+      },
+      "status": {
+        "name": "Status",
+        "state": {
+          "STATIC": "Geparkeerd",
+          "MOVE": "Onderweg",
+          "OFFLINE": "Offline"
+        }
+      },
+      "speed": {
+        "name": "Snelheid"
+      },
+      "latitude": {
+        "name": "Breedtegraad"
+      },
+      "longitude": {
+        "name": "Lengtegraad"
+      },
+      "satellites": {
+        "name": "Satellieten"
+      },
+      "signal": {
+        "name": "Signaalsterkte"
+      },
+      "last_online": {
+        "name": "Laatste online"
+      },
+      "positioning_time": {
+        "name": "Laatste GPS-fix"
+      },
+      "today_mileage": {
+        "name": "Kilometers vandaag"
+      },
+      "total_mileage": {
+        "name": "Totale kilometerstand"
+      },
+      "voltage": {
+        "name": "Spanning"
+      },
+      "positioning_type": {
+        "name": "Positionering type"
+      }
     }
   }
 }

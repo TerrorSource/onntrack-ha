@@ -1,201 +1,80 @@
 """Data update coordinator voor Onntrack."""
 from __future__ import annotations
 
-import asyncio
-import hashlib
 import logging
 from datetime import timedelta
 
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_PASSWORD, CONF_SCAN_INTERVAL, CONF_USERNAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
-from .const import (
-    DOMAIN,
-    API_LOGIN,
-    API_MONITOR,
-    CODE_SUCCESS,
-    CODE_ALT_SUCCESS,
-    CODE_TOKEN_MISSING,
-    CODE_TOKEN_INVALID,
-    DEFAULT_SCAN_INTERVAL,
-)
+from .api import OnntrackApi, OnntrackAuthError, OnntrackError
+from .const import CONF_IMEI, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .parser import OnntrackData, merge_data, parse_monitor_data
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class OnntrackCoordinator(DataUpdateCoordinator):
-    """Coordineert data-updates van de Onntrack API."""
+class OnntrackCoordinator(DataUpdateCoordinator[OnntrackData]):
+    """Coördineert data-updates van de Onntrack API."""
 
-    def __init__(self, hass: HomeAssistant, username: str, password: str, imei: str) -> None:
-        """Initialiseer de coordinator."""
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Initialiseer de coördinator vanuit een config entry."""
+        scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+            update_interval=timedelta(seconds=scan_interval),
         )
-        self.username = username
-        self.password = password
-        self.imei = imei
-        self._token: str | None = None
+        self.imei: str = entry.data[CONF_IMEI]
+        self.api = OnntrackApi(
+            async_get_clientsession(hass),
+            entry.data[CONF_USERNAME],
+            entry.data[CONF_PASSWORD],
+        )
 
-    async def async_login(self) -> str:
-        """Log in bij Onntrack en retourneer een token."""
-        session = async_get_clientsession(self.hass)
-        password_md5 = hashlib.md5(self.password.encode()).hexdigest()
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Gedeelde apparaatinfo voor alle entiteiten."""
+        name = f"Onntrack {self.imei[-5:]}"
+        if self.data and self.data.device_name:
+            name = self.data.device_name
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.imei)},
+            name=name,
+            manufacturer="Onntrack",
+            model="GPS Tracker",
+        )
+
+    async def _async_update_data(self) -> OnntrackData:
+        """Haal data op en vertaal API-fouten naar HA-excepties."""
         try:
-            async with asyncio.timeout(10):
-                resp = await session.post(
-                    API_LOGIN,
-                    json={
-                        "account": self.username,
-                        "password": password_md5,
-                        "language": "en",
-                        "validCode": "",
-                        "nodeId": "",
-                    },
-                    headers={"Content-Type": "application/json"},
-                )
-                data = await resp.json(content_type=None)
-        except Exception as err:
-            raise UpdateFailed(f"Verbindingsfout bij inloggen: {err}") from err
+            sections = await self.api.get_monitor_info(self.imei)
+        except OnntrackAuthError as err:
+            raise ConfigEntryAuthFailed(str(err)) from err
+        except OnntrackError as err:
+            raise UpdateFailed(str(err)) from err
 
-        _LOGGER.debug("Onntrack login response: %s", data)
+        result = merge_data(
+            self.data, parse_monitor_data(sections, dt_util.DEFAULT_TIME_ZONE)
+        )
 
-        code = data.get("code")
-        if code not in (CODE_SUCCESS, CODE_ALT_SUCCESS):
-            raise ConfigEntryAuthFailed(
-                f"Inloggen mislukt (code {code}): {data.get('msg')}"
-            )
-
-        raw_data = data.get("data", {})
-        if isinstance(raw_data, dict):
-            token = raw_data.get("token")
-        elif isinstance(raw_data, str) and len(raw_data) > 20:
-            token = raw_data
-        else:
-            token = None
-
-        if not token:
-            raise ConfigEntryAuthFailed("Geen token ontvangen na inloggen")
-
-        _LOGGER.debug("Onntrack token vernieuwd")
-        return token
-
-    async def _fetch_monitor_data(self) -> dict:
-        """Haal monitordata op voor het opgegeven IMEI."""
-        session = async_get_clientsession(self.hass)
-        try:
-            async with asyncio.timeout(10):
-                resp = await session.post(
-                    API_MONITOR,
-                    json={"imei": self.imei},
-                    headers={
-                        "Content-Type": "application/json",
-                        "Authorization": self._token,
-                    },
-                )
-                data = await resp.json(content_type=None)
-        except Exception as err:
-            raise UpdateFailed(f"Verbindingsfout bij ophalen data: {err}") from err
-
-        return data
-
-    async def _async_update_data(self) -> dict:
-        """Haal data op, vernieuw token indien nodig."""
-        if self._token is None:
-            self._token = await self.async_login()
-
-        data = await self._fetch_monitor_data()
-        code = data.get("code")
-
-        if code in (CODE_TOKEN_MISSING, CODE_TOKEN_INVALID):
-            _LOGGER.info("Onntrack token verlopen, opnieuw inloggen...")
-            self._token = await self.async_login()
-            data = await self._fetch_monitor_data()
-            code = data.get("code")
-
-        if code not in (CODE_SUCCESS, CODE_ALT_SUCCESS):
-            raise UpdateFailed(f"API-fout (code {code}): {data.get('msg')}")
-
-        return self._parse_monitor_data(data.get("data", []))
-
-    def _parse_monitor_data(self, sections: list) -> dict:
-        """Verwerk de geneste API-respons naar een plat dictionary."""
-        result = {}
-
-        for section in sections:
-            model = section.get("modeleName", "")
-            items = section.get("monitorBaseVOS", [])
-
-            if model == "latestPosition":
-                for item in items:
-                    if item["key"] == "address":
-                        result["address"] = item.get("value")
-                    elif item["key"] == "latlng":
-                        for sub in item.get("value", []):
-                            if sub["key"] == "source_latlng":
-                                parts = sub["value"].split(",")
-                                if len(parts) == 2:
-                                    try:
-                                        result["latitude"] = float(parts[0])
-                                        result["longitude"] = float(parts[1])
-                                    except ValueError:
-                                        pass
-
-            elif model == "gpsDevice":
-                for item in items:
-                    if item["key"] == "lastOnlineTime":
-                        result["last_online"] = item.get("value")
-                    elif item["key"] == "positioningTime":
-                        result["positioning_time"] = item.get("value")
-                    elif item["key"] == "satellite":
-                        result["satellites"] = item.get("value")
-                    elif item["key"] == "signal":
-                        result["signal"] = item.get("value")
-                    elif item["key"] == "positioningType":
-                        result["positioning_type"] = item.get("value")
-
-            elif model == "basic":
-                for item in items:
-                    if item["key"] == "status":
-                        for sub in item.get("value", []):
-                            if sub["key"] == "status":
-                                result["status"] = sub.get("value")
-                            elif sub["key"] == "acc":
-                                result["acc"] = sub.get("value") == "1"
-                    elif item["key"] == "speed":
-                        for sub in item.get("value", []):
-                            if sub["key"] == "speed":
-                                result["speed"] = sub.get("value")
-
-            elif model == "header":
-                for item in items:
-                    if item["key"] == "mcTypeAlias":
-                        result["device_name"] = item.get("value")
-                    elif item["key"] == "imei":
-                        result["imei"] = item.get("value")
-
-            elif model == "todayActivity":
-                for item in items:
-                    if item["key"] == "todayMileage":
-                        for sub in item.get("value", []):
-                            if sub["key"] == "value":
-                                result["today_mileage"] = sub.get("value")
-                    elif item["key"] == "externalVoltage":
-                        for sub in item.get("value", []):
-                            if sub["key"] == "value":
-                                result["voltage"] = sub.get("value")
-
-            elif model == "vehicle":
-                for item in items:
-                    if item["key"] == "mileage":
-                        result["total_mileage"] = item.get("value")
+        # TIJDELIJKE DEBUG-LOGGING (issue #1: kaart updatet niet).
+        # Alleen actief met logger op debug; haalt dan ook queryEquipmentList
+        # op zodat we kunnen zien of dat endpoint een verse positie levert.
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            _LOGGER.debug("Onntrack monitor geparsed: %s", result)
+            _LOGGER.debug("Onntrack ruwe monitor data: %s", sections)
+            try:
+                equipment = await self.api.get_equipment_list(self.imei)
+                _LOGGER.debug("Onntrack queryEquipmentList: %s", equipment)
+            except OnntrackError as err:
+                _LOGGER.debug("Onntrack queryEquipmentList mislukt: %s", err)
 
         return result
-
-    async def async_shutdown(self) -> None:
-        """Sluit de coordinator netjes af."""
-        await super().async_shutdown()

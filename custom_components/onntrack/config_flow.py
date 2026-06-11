@@ -1,25 +1,42 @@
 """Config flow voor Onntrack integratie."""
 from __future__ import annotations
 
+from typing import Any
+
 import voluptuous as vol
-import aiohttp
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
-from homeassistant.core import HomeAssistant
+from homeassistant.const import CONF_PASSWORD, CONF_SCAN_INTERVAL, CONF_USERNAME
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    SelectSelector,
+    SelectSelectorConfig,
+)
 
-from .const import DOMAIN, CONF_IMEI
-from .coordinator import OnntrackCoordinator
+from .api import OnntrackApi, OnntrackAuthError, OnntrackError
+from .const import (
+    CONF_IMEI,
+    CONF_VEHICLE_TYPE,
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_VEHICLE_TYPE,
+    DOMAIN,
+    VEHICLE_TYPES,
+)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_USERNAME, description={"suggested_value": ""}): str,
+        vol.Required(CONF_USERNAME): str,
         vol.Required(CONF_PASSWORD): str,
-        vol.Required(CONF_IMEI, description={"suggested_value": ""}): str,
+        vol.Required(CONF_IMEI): str,
     }
 )
+
+STEP_REAUTH_DATA_SCHEMA = vol.Schema({vol.Required(CONF_PASSWORD): str})
 
 
 class OnntrackConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -27,30 +44,49 @@ class OnntrackConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialiseer de flow."""
+        self._reauth_entry: config_entries.ConfigEntry | None = None
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> OnntrackOptionsFlow:
+        """Geef de options flow terug."""
+        return OnntrackOptionsFlow(config_entry)
+
+    async def _async_validate_login(self, username: str, password: str) -> str | None:
+        """Probeer in te loggen; geeft een error-key terug of None bij succes."""
+        api = OnntrackApi(async_get_clientsession(self.hass), username, password)
+        try:
+            await api.login()
+        except OnntrackAuthError:
+            return "invalid_auth"
+        except OnntrackError:
+            return "cannot_connect"
+        except Exception:  # noqa: BLE001
+            return "cannot_connect"
+        return None
+
     async def async_step_user(
-        self, user_input: dict | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Verwerk de eerste stap."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            username = user_input[CONF_USERNAME]
+            username = user_input[CONF_USERNAME].strip()
             password = user_input[CONF_PASSWORD]
             imei = user_input[CONF_IMEI].strip()
 
-            try:
-                coordinator = OnntrackCoordinator(
-                    self.hass, username, password, imei
-                )
-                await coordinator.async_login()
-                await coordinator.async_shutdown()
-            except ConfigEntryAuthFailed:
-                errors["base"] = "invalid_auth"
-            except Exception:  # noqa: BLE001
-                errors["base"] = "cannot_connect"
+            await self.async_set_unique_id(imei)
+            self._abort_if_unique_id_configured()
+
+            error = await self._async_validate_login(username, password)
+            if error:
+                errors["base"] = error
             else:
-                await self.async_set_unique_id(imei)
-                self._abort_if_unique_id_configured()
                 return self.async_create_entry(
                     title=f"Onntrack {imei[-5:]}",
                     data={
@@ -66,6 +102,86 @@ class OnntrackConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_reauth(self, entry_data: dict) -> FlowResult:
-        """Herauth bij verlopen sessie."""
-        return await self.async_step_user()
+    async def async_step_reauth(self, entry_data: dict[str, Any]) -> FlowResult:
+        """Start herauthenticatie bij verlopen of gewijzigde inloggegevens."""
+        self._reauth_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Vraag het nieuwe wachtwoord en werk de bestaande entry bij."""
+        errors: dict[str, str] = {}
+        if self._reauth_entry is None:
+            return self.async_abort(reason="reauth_failed")
+
+        if user_input is not None:
+            username = self._reauth_entry.data[CONF_USERNAME]
+            password = user_input[CONF_PASSWORD]
+
+            error = await self._async_validate_login(username, password)
+            if error:
+                errors["base"] = error
+            else:
+                self.hass.config_entries.async_update_entry(
+                    self._reauth_entry,
+                    data={**self._reauth_entry.data, CONF_PASSWORD: password},
+                )
+                await self.hass.config_entries.async_reload(
+                    self._reauth_entry.entry_id
+                )
+                return self.async_abort(reason="reauth_successful")
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=STEP_REAUTH_DATA_SCHEMA,
+            description_placeholders={
+                "username": self._reauth_entry.data[CONF_USERNAME]
+            },
+            errors=errors,
+        )
+
+
+class OnntrackOptionsFlow(config_entries.OptionsFlow):
+    """Opties voor een bestaande Onntrack entry."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialiseer de options flow."""
+        self._config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Toon en verwerk het optieformulier."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        options = self._config_entry.options
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_SCAN_INTERVAL,
+                    default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=30,
+                        max=600,
+                        step=10,
+                        unit_of_measurement="s",
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
+                vol.Required(
+                    CONF_VEHICLE_TYPE,
+                    default=options.get(CONF_VEHICLE_TYPE, DEFAULT_VEHICLE_TYPE),
+                ): SelectSelector(
+                    SelectSelectorConfig(
+                        options=VEHICLE_TYPES,
+                        translation_key="vehicle_type",
+                    )
+                ),
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)
