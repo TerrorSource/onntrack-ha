@@ -69,9 +69,9 @@
       "status": {
         "name": "Status",
         "state": {
-          "STATIC": "Geparkeerd",
-          "MOVE": "Onderweg",
-          "OFFLINE": "Offline"
+          "static": "Geparkeerd",
+          "move": "Onderweg",
+          "offline": "Offline"
         }
       },
       "speed": {

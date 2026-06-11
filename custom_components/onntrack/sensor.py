@@ -40,7 +40,7 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
         translation_key="status",
         icon="mdi:car-info",
         device_class=SensorDeviceClass.ENUM,
-        options=["STATIC", "MOVE", "OFFLINE"],
+        options=["static", "move", "offline"],
         value_fn=lambda data: data.status,
     ),
     OnntrackSensorDescription(
@@ -178,13 +178,13 @@ class OnntrackSensor(CoordinatorEntity[OnntrackCoordinator], SensorEntity):
             return None
         value = self.entity_description.value_fn(data)
 
-        # Onbekende enum-waarden van de API dynamisch toestaan, zodat een
-        # nieuwe statuswaarde de sensor niet laat crashen.
+        # Enum-waarden lowercase (vereiste voor vertaalsleutels) en onbekende
+        # API-waarden dynamisch toestaan zodat de sensor nooit crasht.
         if (
             value is not None
             and self.entity_description.device_class == SensorDeviceClass.ENUM
         ):
-            value = str(value)
+            value = str(value).lower()
             options = list(self.options or [])
             if value not in options:
                 options.append(value)
