@@ -62,6 +62,11 @@
         "name": "Ontsteking"
       }
     },
+    "button": {
+      "refresh": {
+        "name": "Ververs nu"
+      }
+    },
     "sensor": {
       "address": {
         "name": "Locatie adres"

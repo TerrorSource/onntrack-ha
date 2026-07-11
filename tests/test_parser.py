@@ -111,6 +111,17 @@ def test_unit_stripping_and_decimal_comma():
     assert parser.to_int("15 sats") == 15
 
 
+def test_zero_zero_position_is_ignored():
+    sections = [
+        {"modeleName": "latestPosition", "monitorBaseVOS": [
+            {"key": "latlng", "value": [{"key": "source_latlng", "value": "0.0,0.0"}]},
+        ]},
+    ]
+    data = parser.parse_monitor_data(sections, TZ)
+    assert data.latitude is None
+    assert data.longitude is None
+
+
 def test_malformed_response_does_not_crash():
     rommel = [
         None,

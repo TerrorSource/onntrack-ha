@@ -143,9 +143,13 @@ def _set_latlng(result: OnntrackData, raw: Any) -> None:
         return
     lat = to_float(parts[0])
     lon = to_float(parts[1])
-    if lat is not None and lon is not None:
-        result.latitude = lat
-        result.longitude = lon
+    if lat is None or lon is None:
+        return
+    # 0,0 is de "geen GPS-fix" marker van veel trackers, geen echte positie
+    if lat == 0.0 and lon == 0.0:
+        return
+    result.latitude = lat
+    result.longitude = lon
 
 
 def merge_data(old: OnntrackData | None, new: OnntrackData) -> OnntrackData:

@@ -50,6 +50,8 @@ class OnntrackCoordinator(DataUpdateCoordinator[OnntrackData]):
             name=name,
             manufacturer="Onntrack",
             model="GPS Tracker",
+            serial_number=self.imei,
+            configuration_url="https://platform.onntrack.nl",
         )
 
     async def _async_update_data(self) -> OnntrackData:

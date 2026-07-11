@@ -62,6 +62,11 @@
         "name": "Ignition"
       }
     },
+    "button": {
+      "refresh": {
+        "name": "Refresh now"
+      }
+    },
     "sensor": {
       "address": {
         "name": "Location address"

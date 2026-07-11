@@ -7,7 +7,12 @@ from homeassistant.core import HomeAssistant
 
 from .coordinator import OnntrackCoordinator
 
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.DEVICE_TRACKER, Platform.SENSOR]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.DEVICE_TRACKER,
+    Platform.SENSOR,
+]
 
 OnntrackConfigEntry = ConfigEntry[OnntrackCoordinator]
 

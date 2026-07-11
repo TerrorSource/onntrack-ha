@@ -50,9 +50,15 @@ class OnntrackApi:
         try:
             async with asyncio.timeout(REQUEST_TIMEOUT):
                 resp = await self._session.post(url, json=body, headers=headers)
+                status = resp.status
                 data = await resp.json(content_type=None)
         except (aiohttp.ClientError, TimeoutError) as err:
             raise OnntrackError(f"Verbindingsfout: {err}") from err
+        except ValueError as err:
+            # Geen geldige JSON, bv. een HTML-storingspagina
+            raise OnntrackError(f"Ongeldige API-respons (HTTP {resp.status})") from err
+        if status >= 400:
+            raise OnntrackError(f"HTTP-fout {status} van de Onntrack API")
         if not isinstance(data, dict):
             raise OnntrackError(f"Onverwachte API-respons: {data!r}")
         return data

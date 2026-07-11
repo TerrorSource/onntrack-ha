@@ -1,14 +1,15 @@
 # Onntrack voor Home Assistant
 
 [![HACS Badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![Validate](https://github.com/TerrorSource/onntrack-ha/actions/workflows/validate.yml/badge.svg)](https://github.com/TerrorSource/onntrack-ha/actions/workflows/validate.yml)
 
-Integreer je Onntrack GPS tracker in Home Assistant. Toont locatie, adres, snelheid, spanning en meer — met automatisch token beheer.
+Integreer je Onntrack GPS-tracker in Home Assistant. Live locatie op de kaart, adres, snelheid, ontsteking, kilometerstanden en meer — met automatisch tokenbeheer en instelbaar update-interval.
 
 ## Installatie via HACS
 
 1. Open HACS in Home Assistant
 2. Ga naar **Integraties** → **⋮** → **Aangepaste repositories**
-3. Voeg toe: `https://github.com/TerrorSource/onntrack-ha`  
+3. Voeg toe: `https://github.com/TerrorSource/onntrack-ha`
    Categorie: **Integratie**
 4. Zoek naar "Onntrack" en installeer
 5. Herstart Home Assistant
@@ -16,23 +17,65 @@ Integreer je Onntrack GPS tracker in Home Assistant. Toont locatie, adres, snelh
 7. Zoek op "Onntrack" en vul in:
    - E-mailadres (Onntrack account)
    - Wachtwoord
-   - IMEI nummer (te vinden op platform.onntrack.nl)
+   - IMEI nummer (te vinden op [platform.onntrack.nl](https://platform.onntrack.nl))
+
+Vereist Home Assistant 2024.4 of nieuwer.
+
+## Opties
+
+Na installatie kun je via **Instellingen → Apparaten & Diensten → Onntrack → Configureren** instellen:
+
+| Optie | Standaard | Beschrijving |
+|---|---|---|
+| Update-interval | 60 s | Hoe vaak de Onntrack cloud wordt bevraagd (30-600 s) |
+| Voertuigtype | Overig | Bepaalt het icoon op de kaart: auto, bestelbus, vrachtwagen, motor, scooter |
 
 ## Entiteiten
 
 | Entiteit | Beschrijving |
 |---|---|
-| `device_tracker.onntrack_XXXXX_locatie` | GPS positie op de kaart |
-| `sensor.onntrack_XXXXX_locatie_adres` | Volledig adres |
-| `sensor.onntrack_XXXXX_status` | STATIC / MOVE |
-| `sensor.onntrack_XXXXX_snelheid` | Snelheid in km/h |
-| `sensor.onntrack_XXXXX_breedtegraad` | Latitude |
-| `sensor.onntrack_XXXXX_lengtegraad` | Longitude |
-| `sensor.onntrack_XXXXX_satellieten` | Aantal satellieten |
-| `sensor.onntrack_XXXXX_spanning` | Externe spanning (V) |
-| `sensor.onntrack_XXXXX_kilometer_vandaag` | Km gereden vandaag |
-| `sensor.onntrack_XXXXX_laatste_online` | Tijdstip laatste contact |
+| **Locatie** (device tracker) | GPS-positie op de kaart |
+| **Locatie adres** | Volledig adres van de huidige positie |
+| **Status** | Geparkeerd / Onderweg / Offline |
+| **Snelheid** | Snelheid in km/h |
+| **Ontsteking** (binary sensor) | Contact aan/uit (ACC) |
+| **Kilometers vandaag** | Afstand gereden vandaag |
+| **Totale kilometerstand** | Odometer |
+| **Laatste online** | Tijdstip laatste contact met de tracker |
+| **Laatste GPS-fix** | Tijdstip van de laatste positiebepaling |
+| **Ververs nu** (button) | Direct een verse update opvragen |
 
-## Token beheer
+Diagnostisch (standaard onder "Diagnostic" op de apparaatpagina): breedtegraad, lengtegraad, satellieten, signaalsterkte, spanning, positioneringstype.
 
-De integratie logt automatisch in en vernieuwt het token zodra het verloopt. Je wachtwoord wordt veilig opgeslagen in de Home Assistant `config_entries`.
+## Automatiseringsvoorbeeld
+
+```yaml
+automation:
+  - alias: "Melding bij starten voertuig"
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.onntrack_XXXXX_ontsteking
+        to: "on"
+    actions:
+      - action: notify.mobile_app_telefoon
+        data:
+          message: "Het voertuig is gestart"
+```
+
+## Problemen melden
+
+Voeg bij een [issue](https://github.com/TerrorSource/onntrack-ha/issues) altijd het diagnostics-bestand toe: **apparaatpagina → Download diagnostics** (locatiegegevens en inloggegevens worden automatisch weggelaten). Voor diepere analyse kun je debug-logging aanzetten via **Instellingen → Apparaten & Diensten → Onntrack → Foutopsporingsregistratie inschakelen**.
+
+## Tokenbeheer
+
+De integratie logt automatisch in en vernieuwt het token zodra het verloopt. Wijzigt je wachtwoord, dan vraagt Home Assistant eenmalig om het nieuwe wachtwoord (herauthenticatie). Je wachtwoord wordt opgeslagen in de Home Assistant `config_entries`.
+
+## Ontwikkeling
+
+De API-parsing zit in `custom_components/onntrack/parser.py` (bewust zonder Home Assistant-afhankelijkheden) en is getest met pytest:
+
+```bash
+pytest tests/
+```
+
+Elke push wordt gevalideerd met hassfest, HACS-validatie en de parser-tests (GitHub Actions).
