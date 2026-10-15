@@ -32,13 +32,11 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
     OnntrackSensorDescription(
         key="address",
         translation_key="address",
-        icon="mdi:map-marker",
         value_fn=lambda data: data.address,
     ),
     OnntrackSensorDescription(
         key="status",
         translation_key="status",
-        icon="mdi:car-info",
         device_class=SensorDeviceClass.ENUM,
         options=["static", "move", "offline"],
         value_fn=lambda data: data.status,
@@ -46,7 +44,6 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
     OnntrackSensorDescription(
         key="speed",
         translation_key="speed",
-        icon="mdi:speedometer",
         native_unit_of_measurement="km/h",
         device_class=SensorDeviceClass.SPEED,
         state_class=SensorStateClass.MEASUREMENT,
@@ -56,7 +53,6 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
     OnntrackSensorDescription(
         key="latitude",
         translation_key="latitude",
-        icon="mdi:latitude",
         native_unit_of_measurement="°",
         suggested_display_precision=6,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -65,7 +61,6 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
     OnntrackSensorDescription(
         key="longitude",
         translation_key="longitude",
-        icon="mdi:longitude",
         native_unit_of_measurement="°",
         suggested_display_precision=6,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -74,7 +69,6 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
     OnntrackSensorDescription(
         key="satellites",
         translation_key="satellites",
-        icon="mdi:satellite-variant",
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: data.satellites,
@@ -82,7 +76,6 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
     OnntrackSensorDescription(
         key="signal",
         translation_key="signal",
-        icon="mdi:signal",
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: data.signal,
@@ -90,21 +83,18 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
     OnntrackSensorDescription(
         key="last_online",
         translation_key="last_online",
-        icon="mdi:clock-outline",
         device_class=SensorDeviceClass.TIMESTAMP,
         value_fn=lambda data: data.last_online,
     ),
     OnntrackSensorDescription(
         key="positioning_time",
         translation_key="positioning_time",
-        icon="mdi:crosshairs-gps",
         device_class=SensorDeviceClass.TIMESTAMP,
         value_fn=lambda data: data.positioning_time,
     ),
     OnntrackSensorDescription(
         key="today_mileage",
         translation_key="today_mileage",
-        icon="mdi:map-marker-distance",
         native_unit_of_measurement="km",
         device_class=SensorDeviceClass.DISTANCE,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -113,7 +103,6 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
     OnntrackSensorDescription(
         key="total_mileage",
         translation_key="total_mileage",
-        icon="mdi:counter",
         native_unit_of_measurement="km",
         device_class=SensorDeviceClass.DISTANCE,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -122,7 +111,6 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
     OnntrackSensorDescription(
         key="voltage",
         translation_key="voltage",
-        icon="mdi:lightning-bolt",
         native_unit_of_measurement="V",
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -132,7 +120,6 @@ SENSOR_DESCRIPTIONS: tuple[OnntrackSensorDescription, ...] = (
     OnntrackSensorDescription(
         key="positioning_type",
         translation_key="positioning_type",
-        icon="mdi:crosshairs-gps",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: data.positioning_type,
     ),

@@ -1,7 +1,9 @@
 {
   "domain": "onntrack",
   "name": "Onntrack GPS Tracker",
-  "codeowners": ["@TerrorSource"],
+  "codeowners": [
+    "@TerrorSource"
+  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/TerrorSource/onntrack-ha",
@@ -9,5 +11,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/TerrorSource/onntrack-ha/issues",
   "requirements": [],
-  "version": "1.0.7"
+  "version": "1.0.8"
 }

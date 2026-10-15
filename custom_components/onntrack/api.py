@@ -8,7 +8,6 @@ import logging
 import aiohttp
 
 from .const import (
-    API_LIST,
     API_LOGIN,
     API_MONITOR,
     CODE_ALT_SUCCESS,
@@ -113,6 +112,3 @@ class OnntrackApi:
             raise OnntrackError(f"API-fout (code {code}): {data.get('msg')}")
         return data.get("data") or []
 
-    async def get_equipment_list(self, imei: str) -> dict:
-        """Diagnostisch (issue #1): ruwe respons van queryEquipmentList."""
-        return await self._post(API_LIST, {"imei": imei})

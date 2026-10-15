@@ -1,0 +1,64 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "ignition": {
+        "default": "mdi:engine-off",
+        "state": {
+          "on": "mdi:engine",
+          "off": "mdi:engine-off"
+        }
+      }
+    },
+    "button": {
+      "refresh": {
+        "default": "mdi:refresh"
+      }
+    },
+    "sensor": {
+      "address": {
+        "default": "mdi:map-marker"
+      },
+      "status": {
+        "default": "mdi:car-info",
+        "state": {
+          "static": "mdi:parking",
+          "move": "mdi:car",
+          "offline": "mdi:car-off"
+        }
+      },
+      "speed": {
+        "default": "mdi:speedometer"
+      },
+      "latitude": {
+        "default": "mdi:latitude"
+      },
+      "longitude": {
+        "default": "mdi:longitude"
+      },
+      "satellites": {
+        "default": "mdi:satellite-variant"
+      },
+      "signal": {
+        "default": "mdi:signal"
+      },
+      "last_online": {
+        "default": "mdi:clock-outline"
+      },
+      "positioning_time": {
+        "default": "mdi:crosshairs-gps"
+      },
+      "today_mileage": {
+        "default": "mdi:map-marker-distance"
+      },
+      "total_mileage": {
+        "default": "mdi:counter"
+      },
+      "voltage": {
+        "default": "mdi:lightning-bolt"
+      },
+      "positioning_type": {
+        "default": "mdi:crosshairs-gps"
+      }
+    }
+  }
+}

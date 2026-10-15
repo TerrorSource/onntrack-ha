@@ -67,16 +67,8 @@ class OnntrackCoordinator(DataUpdateCoordinator[OnntrackData]):
             self.data, parse_monitor_data(sections, dt_util.DEFAULT_TIME_ZONE)
         )
 
-        # TIJDELIJKE DEBUG-LOGGING (issue #1: kaart updatet niet).
-        # Alleen actief met logger op debug; haalt dan ook queryEquipmentList
-        # op zodat we kunnen zien of dat endpoint een verse positie levert.
         if _LOGGER.isEnabledFor(logging.DEBUG):
             _LOGGER.debug("Onntrack monitor geparsed: %s", result)
             _LOGGER.debug("Onntrack ruwe monitor data: %s", sections)
-            try:
-                equipment = await self.api.get_equipment_list(self.imei)
-                _LOGGER.debug("Onntrack queryEquipmentList: %s", equipment)
-            except OnntrackError as err:
-                _LOGGER.debug("Onntrack queryEquipmentList mislukt: %s", err)
 
         return result

@@ -24,7 +24,6 @@ class OnntrackRefreshButton(CoordinatorEntity[OnntrackCoordinator], ButtonEntity
 
     _attr_has_entity_name = True
     _attr_translation_key = "refresh"
-    _attr_icon = "mdi:refresh"
 
     def __init__(self, coordinator: OnntrackCoordinator) -> None:
         """Initialiseer de button."""

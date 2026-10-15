@@ -30,7 +30,6 @@ class OnntrackIgnitionSensor(
     _attr_has_entity_name = True
     _attr_translation_key = "ignition"
     _attr_device_class = BinarySensorDeviceClass.POWER
-    _attr_icon = "mdi:engine"
 
     def __init__(self, coordinator: OnntrackCoordinator) -> None:
         """Initialiseer de sensor."""

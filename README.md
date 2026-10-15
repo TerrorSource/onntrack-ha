@@ -19,7 +19,7 @@ Integreer je Onntrack GPS-tracker in Home Assistant. Live locatie op de kaart, a
    - Wachtwoord
    - IMEI nummer (te vinden op [platform.onntrack.nl](https://platform.onntrack.nl))
 
-Vereist Home Assistant 2024.4 of nieuwer.
+Vereist Home Assistant 2026.3 of nieuwer.
 
 ## Opties
 
